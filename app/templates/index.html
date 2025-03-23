@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">欢迎使用停车场管理系统</h1>
+    <p class="lead">一个功能全面的停车场管理解决方案，帮助您高效管理停车场运营。</p>
+    <hr class="my-4">
+    <p>通过本系统，您可以轻松实现车辆入场、出场管理，费用计算，统计报表等功能。</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}" role="button">
+        <i class="fas fa-sign-in-alt mr-1"></i>立即登录
+    </a>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <i class="fas fa-car fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">高效车辆管理</h5>
+                <p class="card-text">快速处理车辆入场和出场，实时监控停车场使用情况。</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <i class="fas fa-money-bill-wave fa-3x text-success mb-3"></i>
+                <h5 class="card-title">智能收费系统</h5>
+                <p class="card-text">自动计算停车费用，支持多种支付方式，轻松开具发票。</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                <h5 class="card-title">数据统计分析</h5>
+                <p class="card-text">生成详细的运营报表，帮助您做出更明智的业务决策。</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

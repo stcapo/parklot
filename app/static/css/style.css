@@ -1,0 +1,162 @@
+/* 基础样式 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* 顶部导航 */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand i {
+    font-size: 1.2rem;
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    border-top-left-radius: 0.5rem !important;
+    border-top-right-radius: 0.5rem !important;
+    font-weight: 500;
+}
+
+/* 表格样式 */
+.table th {
+    font-weight: 600;
+    border-top: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* 按钮样式 */
+.btn {
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* 徽章样式 */
+.badge {
+    padding: 0.25em 0.6em;
+    font-weight: 500;
+}
+
+/* 数据卡片 */
+.stats-card {
+    transition: all 0.3s;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* 停车场状态指示颜色 */
+.spot-vacant {
+    background-color: #28a745 !important;
+    color: white !important;
+}
+
+.spot-occupied {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.spot-disabled {
+    background-color: #6c757d !important;
+    color: white !important;
+}
+
+.spot-vip {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+/* 车辆类型颜色 */
+.vehicle-car {
+    color: #007bff;
+}
+
+.vehicle-motorcycle {
+    color: #17a2b8;
+}
+
+.vehicle-truck {
+    color: #fd7e14;
+}
+
+/* 页脚样式 */
+.footer {
+    margin-top: 2rem;
+    padding: 1rem 0;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* 打印样式 */
+@media print {
+    .navbar, .footer, .btn, .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+    
+    .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    body {
+        background-color: white !important;
+    }
+}
+
+/* 表单样式 */
+.form-group label {
+    font-weight: 500;
+}
+
+/* 进度条样式 */
+.progress {
+    height: 0.8rem;
+    border-radius: 0.5rem;
+}
+
+/* 动画 */
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+}

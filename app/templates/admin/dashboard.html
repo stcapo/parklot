@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}管理员控制面板 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="fas fa-tachometer-alt mr-2"></i>管理员控制面板</h2>
+
+<div class="row">
+    <!-- 停车场概览 -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-car mr-2"></i>小汽车停车位</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <canvas id="carPieChart" width="100" height="100"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1">总车位: {{ parking_summary.car.total }}</p>
+                        <p class="mb-1">已占用: {{ parking_summary.car.occupied }}</p>
+                        <p class="mb-1">空闲: {{ parking_summary.car.available }}</p>
+                        <p class="mb-1">占用率: {{ (parking_summary.car.occupancy_rate * 100)|round(1) }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-motorcycle mr-2"></i>摩托车停车位</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <canvas id="motorcyclePieChart" width="100" height="100"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1">总车位: {{ parking_summary.motorcycle.total }}</p>
+                        <p class="mb-1">已占用: {{ parking_summary.motorcycle.occupied }}</p>
+                        <p class="mb-1">空闲: {{ parking_summary.motorcycle.available }}</p>
+                        <p class="mb-1">占用率: {{ (parking_summary.motorcycle.occupancy_rate * 100)|round(1) }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-truck mr-2"></i>卡车停车位</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <canvas id="truckPieChart" width="100" height="100"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1">总车位: {{ parking_summary.truck.total }}</p>
+                        <p class="mb-1">已占用: {{ parking_summary.truck.occupied }}</p>
+                        <p class="mb-1">空闲: {{ parking_summary.truck.available }}</p>
+                        <p class="mb-1">占用率: {{ (parking_summary.truck.occupancy_rate * 100)|round(1) }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 营收信息 -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave mr-2"></i>营收信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">今日总收入</h6>
+                                <h3 class="text-success">¥{{ today_revenue.total|round(2) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">昨日总收入</h6>
+                                <h3 class="text-info">¥{{ yesterday_revenue.total|round(2) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <h6>今日收入明细:</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-1">现金: ¥{{ today_revenue.cash|round(2) }}</p>
+                        <p class="mb-1">信用卡: ¥{{ today_revenue.credit_card|round(2) }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1">微信支付: ¥{{ today_revenue.wechat|round(2) }}</p>
+                        <p class="mb-1">支付宝: ¥{{ today_revenue.alipay|round(2) }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('admin.reports') }}" class="btn btn-sm btn-outline-success">查看详细报表</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近入场车辆 -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-car mr-2"></i>最近停车记录</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>车牌号</th>
+                                <th>车辆类型</th>
+                                <th>入场时间</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in recent_vehicles %}
+                            <tr>
+                                <td>{{ vehicle.plate_number }}</td>
+                                <td>
+                                    {% if vehicle.vehicle_type == 'car' %}
+                                        <span class="badge badge-primary">小汽车</span>
+                                    {% elif vehicle.vehicle_type == 'motorcycle' %}
+                                        <span class="badge badge-info">摩托车</span>
+                                    {% elif vehicle.vehicle_type == 'truck' %}
+                                        <span class="badge badge-warning">卡车</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ vehicle.entry_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if vehicle.is_parked %}
+                                        <span class="badge badge-success">在场</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">已离场</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('staff.vehicles') }}" class="btn btn-sm btn-outline-info">查看所有车辆</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 最近系统日志 -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-history mr-2"></i>最近系统日志</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>时间</th>
+                                <th>用户</th>
+                                <th>操作</th>
+                                <th>详情</th>
+                                <th>IP地址</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr>
+                                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td>{{ log.user.username if log.user else '系统' }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.details }}</td>
+                                <td>{{ log.ip_address }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('admin.system_logs') }}" class="btn btn-sm btn-outline-secondary">查看所有日志</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 小汽车车位饼图
+    var carCtx = document.getElementById('carPieChart').getContext('2d');
+    var carChart = new Chart(carCtx, {
+        type: 'pie',
+        data: {
+            labels: ['已占用', '空闲'],
+            datasets: [{
+                data: [{{ parking_summary.car.occupied }}, {{ parking_summary.car.available }}],
+                backgroundColor: ['#dc3545', '#28a745'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 12
+                }
+            }
+        }
+    });
+    
+    // 摩托车车位饼图
+    var motorcycleCtx = document.getElementById('motorcyclePieChart').getContext('2d');
+    var motorcycleChart = new Chart(motorcycleCtx, {
+        type: 'pie',
+        data: {
+            labels: ['已占用', '空闲'],
+            datasets: [{
+                data: [{{ parking_summary.motorcycle.occupied }}, {{ parking_summary.motorcycle.available }}],
+                backgroundColor: ['#dc3545', '#28a745'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 12
+                }
+            }
+        }
+    });
+    
+    // 卡车车位饼图
+    var truckCtx = document.getElementById('truckPieChart').getContext('2d');
+    var truckChart = new Chart(truckCtx, {
+        type: 'pie',
+        data: {
+            labels: ['已占用', '空闲'],
+            datasets: [{
+                data: [{{ parking_summary.truck.occupied }}, {{ parking_summary.truck.available }}],
+                backgroundColor: ['#dc3545', '#28a745'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 12
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

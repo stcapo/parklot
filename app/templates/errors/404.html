@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}页面未找到 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="text-center my-5">
+    <div class="error-container">
+        <h1 class="display-1 text-muted">404</h1>
+        <h2 class="mb-4">页面未找到</h2>
+        <p class="lead">您请求的页面不存在或已被移除。</p>
+        <div class="mt-5">
+            <a href="{{ url_for('public.index') }}" class="btn btn-primary">
+                <i class="fas fa-home mr-1"></i>返回首页
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}车辆出场 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-sign-out-alt mr-2"></i>车辆出场处理</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-4">
+                    <div class="input-group">
+                        {{ form.plate_number(class="form-control", placeholder="请输入车牌号") }}
+                        <div class="input-group-append">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </div>
+                    {% if form.plate_number.errors %}
+                        <div class="text-danger mt-2">
+                            {% for error in form.plate_number.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </form>
+                
+                {% if vehicle %}
+                <div class="card border-success mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">车辆信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>车牌号:</strong> {{ vehicle.plate_number }}</p>
+                                <p>
+                                    <strong>车辆类型:</strong> 
+                                    {% if vehicle.vehicle_type == 'car' %}
+                                        小汽车
+                                    {% elif vehicle.vehicle_type == 'motorcycle' %}
+                                        摩托车
+                                    {% elif vehicle.vehicle_type == 'truck' %}
+                                        卡车
+                                    {% endif %}
+                                </p>
+                                <p><strong>停车位:</strong> {{ vehicle.parking_spot.spot_number }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>入场时间:</strong> {{ vehicle.entry_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                <p><strong>停车时长:</strong> {{ vehicle.parking_duration|round(2) }} 小时</p>
+                                <p><strong>应付费用:</strong> <span class="text-danger font-weight-bold">¥{{ fee }}</span></p>
+                            </div>
+                        </div>
+                        
+                        {% if vehicle.owner_name or vehicle.owner_phone %}
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p><strong>车主信息:</strong></p>
+                                {% if vehicle.owner_name %}
+                                    <p><strong>姓名:</strong> {{ vehicle.owner_name }}</p>
+                                {% endif %}
+                                {% if vehicle.owner_phone %}
+                                    <p><strong>电话:</strong> {{ vehicle.owner_phone }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('staff.process_payment', vehicle_id=vehicle.id) }}" class="btn btn-primary btn-block">
+                            <i class="fas fa-money-bill-wave mr-2"></i>处理支付
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle mr-2"></i>操作说明</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">1. 输入车牌号码查询在场车辆</li>
+                    <li class="list-group-item">2. 确认车辆信息和费用</li>
+                    <li class="list-group-item">3. 点击"处理支付"进入支付界面</li>
+                    <li class="list-group-item">4. 完成支付后，系统将自动释放停车位</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-car mr-2"></i>收费标准</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>车辆类型</th>
+                            <th>费率 (元/小时)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>小汽车</td>
+                            <td>10.00</td>
+                        </tr>
+                        <tr>
+                            <td>摩托车</td>
+                            <td>5.00</td>
+                        </tr>
+                        <tr>
+                            <td>卡车</td>
+                            <td>15.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-muted mt-2 small">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    计费规则: 按照小时计费，不足15分钟按15分钟计算，超过15分钟按半小时计算，超过30分钟按一小时计算。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

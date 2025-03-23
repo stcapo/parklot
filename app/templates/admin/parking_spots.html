@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}停车位管理 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-parking mr-2"></i>停车位管理</h2>
+    <div class="btn-group">
+        <button class="btn btn-outline-primary" id="toggleAvailability">
+            <i class="fas fa-filter mr-1"></i>筛选可用车位
+        </button>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-toggle="dropdown">
+                <i class="fas fa-car mr-1"></i>按类型筛选
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="#" data-filter="all">所有类型</a>
+                <a class="dropdown-item" href="#" data-filter="car">小汽车</a>
+                <a class="dropdown-item" href="#" data-filter="motorcycle">摩托车</a>
+                <a class="dropdown-item" href="#" data-filter="truck">卡车</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">停车位列表</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="parkingSpotTable">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>车位编号</th>
+                        <th>车位类型</th>
+                        <th>状态</th>
+                        <th>位置</th>
+                        <th>特殊属性</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for spot in spots %}
+                    <tr data-available="{{ spot.is_available }}" data-type="{{ spot.spot_type }}">
+                        <td>{{ spot.id }}</td>
+                        <td>{{ spot.spot_number }}</td>
+                        <td>
+                            {% if spot.spot_type == 'car' %}
+                                <span class="badge badge-primary">小汽车</span>
+                            {% elif spot.spot_type == 'motorcycle' %}
+                                <span class="badge badge-info">摩托车</span>
+                            {% elif spot.spot_type == 'truck' %}
+                                <span class="badge badge-warning">卡车</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if spot.is_available %}
+                                <span class="badge badge-success">可用</span>
+                            {% else %}
+                                <span class="badge badge-danger">已占用</span>
+                                {% if spot.current_vehicle %}
+                                    <small class="text-muted d-block">
+                                        {{ spot.current_vehicle.plate_number }}
+                                    </small>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>{{ spot.location or '-' }}</td>
+                        <td>
+                            {% if spot.is_disabled %}
+                                <span class="badge badge-secondary">残疾人专用</span>
+                            {% endif %}
+                            {% if spot.is_vip %}
+                                <span class="badge badge-warning">VIP</span>
+                            {% endif %}
+                            {% if spot.is_reserved %}
+                                <span class="badge badge-info">预留</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ spot.notes or '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_parking_spot', spot_id=spot.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 统计概览 -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">小汽车停车位</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="carPieChart" width="100" height="100"></canvas>
+                <div class="mt-3 text-center">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h6>总数</h6>
+                                <h4 id="carTotal">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h6>可用</h6>
+                                <h4 id="carAvailable">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">摩托车停车位</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="motorcyclePieChart" width="100" height="100"></canvas>
+                <div class="mt-3 text-center">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h6>总数</h6>
+                                <h4 id="motorcycleTotal">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h6>可用</h6>
+                                <h4 id="motorcycleAvailable">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">卡车停车位</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="truckPieChart" width="100" height="100"></canvas>
+                <div class="mt-3 text-center">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h6>总数</h6>
+                                <h4 id="truckTotal">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <h6>可用</h6>
+                                <h4 id="truckAvailable">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化统计
+    updateStatistics();
+    
+    // 切换可用状态筛选
+    let showOnlyAvailable = false;
+    const toggleAvailabilityBtn = document.getElementById('toggleAvailability');
+    
+    toggleAvailabilityBtn.addEventListener('click', function() {
+        showOnlyAvailable = !showOnlyAvailable;
+        
+        if (showOnlyAvailable) {
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            this.innerHTML = '<i class="fas fa-filter mr-1"></i>显示所有车位';
+        } else {
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-outline-primary');
+            this.innerHTML = '<i class="fas fa-filter mr-1"></i>筛选可用车位';
+        }
+        
+        filterTable();
+    });
+    
+    // 类型筛选
+    let selectedType = 'all';
+    const typeFilters = document.querySelectorAll('[data-filter]');
+    
+    typeFilters.forEach(filter => {
+        filter.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectedType = this.dataset.filter;
+            filterTable();
+        });
+    });
+    
+    // 表格筛选函数
+    function filterTable() {
+        const rows = document.querySelectorAll('#parkingSpotTable tbody tr');
+        
+        rows.forEach(row => {
+            const isAvailable = row.dataset.available === 'True';
+            const spotType = row.dataset.type;
+            
+            let showRow = true;
+            
+            if (showOnlyAvailable && !isAvailable) {
+                showRow = false;
+            }
+            
+            if (selectedType !== 'all' && spotType !== selectedType) {
+                showRow = false;
+            }
+            
+            row.style.display = showRow ? '' : 'none';
+        });
+        
+        // 更新统计
+        updateStatistics();
+    }
+    
+    // 更新统计信息
+    function updateStatistics() {
+        const rows = document.querySelectorAll('#parkingSpotTable tbody tr');
+        const stats = {
+            car: { total: 0, available: 0 },
+            motorcycle: { total: 0, available: 0 },
+            truck: { total: 0, available: 0 }
+        };
+        
+        rows.forEach(row => {
+            const type = row.dataset.type;
+            const isAvailable = row.dataset.available === 'True';
+            
+            if (type in stats) {
+                stats[type].total++;
+                if (isAvailable) {
+                    stats[type].available++;
+                }
+            }
+        });
+        
+        // 更新数字显示
+        document.getElementById('carTotal').textContent = stats.car.total;
+        document.getElementById('carAvailable').textContent = stats.car.available;
+        document.getElementById('motorcycleTotal').textContent = stats.motorcycle.total;
+        document.getElementById('motorcycleAvailable').textContent = stats.motorcycle.available;
+        document.getElementById('truckTotal').textContent = stats.truck.total;
+        document.getElementById('truckAvailable').textContent = stats.truck.available;
+        
+        // 更新饼图
+        updatePieChart('carPieChart', stats.car);
+        updatePieChart('motorcyclePieChart', stats.motorcycle);
+        updatePieChart('truckPieChart', stats.truck);
+    }
+    
+    // 更新饼图
+    function updatePieChart(chartId, data) {
+        const ctx = document.getElementById(chartId).getContext('2d');
+        
+        // 检查是否已经存在Chart实例
+        if (window[chartId]) {
+            window[chartId].destroy();
+        }
+        
+        window[chartId] = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['已占用', '可用'],
+                datasets: [{
+                    data: [data.total - data.available, data.available],
+                    backgroundColor: ['#dc3545', '#28a745'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12
+                    }
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            const dataset = data.datasets[tooltipItem.datasetIndex];
+                            const value = dataset.data[tooltipItem.index];
+                            const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${data.labels[tooltipItem.index]}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

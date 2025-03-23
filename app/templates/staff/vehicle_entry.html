@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}车辆入场 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-sign-in-alt mr-2"></i>车辆入场登记</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-group">
+                        {{ form.plate_number.label }}
+                        {{ form.plate_number(class="form-control", placeholder="请输入车牌号") }}
+                        {% if form.plate_number.errors %}
+                            <div class="text-danger">
+                                {% for error in form.plate_number.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.vehicle_type.label }}
+                        {{ form.vehicle_type(class="form-control", id="vehicleType") }}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.parking_spot_id.label }}
+                        {{ form.parking_spot_id(class="form-control") }}
+                        {% if form.parking_spot_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.parking_spot_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.owner_name.label }}
+                        {{ form.owner_name(class="form-control", placeholder="选填项") }}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.owner_phone.label }}
+                        {{ form.owner_phone(class="form-control", placeholder="选填项") }}
+                        {% if form.owner_phone.errors %}
+                            <div class="text-danger">
+                                {% for error in form.owner_phone.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.submit(class="btn btn-success btn-block") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle mr-2"></i>操作说明</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">1. 输入车牌号码，注意大小写（例如：京A12345）</li>
+                    <li class="list-group-item">2. 选择车辆类型</li>
+                    <li class="list-group-item">3. 选择合适的停车位</li>
+                    <li class="list-group-item">4. 可选填写车主信息</li>
+                    <li class="list-group-item">5. 点击"登记入场"完成操作</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-parking mr-2"></i>停车位状态</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="mb-1"><strong>小汽车停车位</strong></p>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" id="carProgress" style="width: 0%">0%</div>
+                    </div>
+                    <p class="mt-1 text-muted" id="carStatus">加载中...</p>
+                </div>
+                
+                <div class="mb-3">
+                    <p class="mb-1"><strong>摩托车停车位</strong></p>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" role="progressbar" id="motorcycleProgress" style="width: 0%">0%</div>
+                    </div>
+                    <p class="mt-1 text-muted" id="motorcycleStatus">加载中...</p>
+                </div>
+                
+                <div>
+                    <p class="mb-1"><strong>卡车停车位</strong></p>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" id="truckProgress" style="width: 0%">0%</div>
+                    </div>
+                    <p class="mt-1 text-muted" id="truckStatus">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取车辆类型和停车位选择框
+    const vehicleTypeSelect = document.getElementById('vehicleType');
+    const parkingSpotSelect = document.getElementById('parking_spot_id');
+    
+    // 当车辆类型变化时，更新停车位选择
+    vehicleTypeSelect.addEventListener('change', function() {
+        fetchAvailableSpots(this.value);
+    });
+    
+    // 初始加载停车位状态
+    fetchParkingStatus();
+    
+    // 初始加载可用停车位
+    fetchAvailableSpots(vehicleTypeSelect.value);
+    
+    // 获取可用停车位的函数
+    function fetchAvailableSpots(vehicleType) {
+        fetch(`/staff/vehicle-entry?vehicle_type=${vehicleType}`)
+            .then(response => response.text())
+            .then(html => {
+                // 使用一个临时元素来解析HTML响应
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // 找到新的停车位选择框
+                const newSelect = tempDiv.querySelector('#parking_spot_id');
+                
+                // 更新当前选择框的选项
+                if (newSelect) {
+                    parkingSpotSelect.innerHTML = newSelect.innerHTML;
+                }
+            })
+            .catch(error => console.error('获取停车位失败:', error));
+    }
+    
+    // 获取停车场状态的函数
+    function fetchParkingStatus() {
+        // 这里我们模拟API调用
+        // 实际项目中应该从服务器获取最新数据
+        const parkingData = {
+            car: { available: 75, total: 100, occupancy_rate: 0.25 },
+            motorcycle: { available: 35, total: 50, occupancy_rate: 0.30 },
+            truck: { available: 12, total: 20, occupancy_rate: 0.40 }
+        };
+        
+        // 更新停车位状态显示
+        updateParkingStatus('car', parkingData.car);
+        updateParkingStatus('motorcycle', parkingData.motorcycle);
+        updateParkingStatus('truck', parkingData.truck);
+    }
+    
+    function updateParkingStatus(type, data) {
+        const progressBar = document.getElementById(`${type}Progress`);
+        const statusText = document.getElementById(`${type}Status`);
+        
+        const occupancyPercent = data.occupancy_rate * 100;
+        
+        progressBar.style.width = `${occupancyPercent}%`;
+        progressBar.textContent = `${Math.round(occupancyPercent)}%`;
+        
+        statusText.textContent = `可用: ${data.available} / 总数: ${data.total}`;
+    }
+});
+</script>
+{% endblock %}

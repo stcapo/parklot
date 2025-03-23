@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}停车收据 - 停车场管理系统{% endblock %}
+
+{% block head %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .receipt-container {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+    
+    .receipt-container {
+        max-width: 80mm;
+        margin: 0 auto;
+        padding: 10px;
+        border: 1px solid #ddd;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .receipt-header {
+        text-align: center;
+        border-bottom: 1px dashed #ccc;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .receipt-logo {
+        max-width: 60px;
+        margin-bottom: 10px;
+    }
+    
+    .receipt-body {
+        margin-bottom: 15px;
+    }
+    
+    .receipt-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    
+    .receipt-divider {
+        border-top: 1px dashed #ccc;
+        margin: 10px 0;
+    }
+    
+    .receipt-total {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        font-size: 1.2em;
+        margin: 10px 0;
+    }
+    
+    .receipt-footer {
+        text-align: center;
+        font-size: 0.8em;
+        border-top: 1px dashed #ccc;
+        padding-top: 10px;
+    }
+    
+    .receipt-qr {
+        text-align: center;
+        margin: 15px 0;
+    }
+    
+    .receipt-qr img {
+        max-width: 120px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-4">
+    <div class="row">
+        <div class="col-md-12 text-center no-print mb-4">
+            <h2><i class="fas fa-receipt mr-2"></i>停车收据</h2>
+            <div class="btn-group">
+                <button onclick="window.print();" class="btn btn-primary">
+                    <i class="fas fa-print mr-1"></i>打印收据
+                </button>
+                <a href="{{ url_for('staff.dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left mr-1"></i>返回
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="receipt-logo">
+            <h4>停车场管理系统</h4>
+            <p>停车收据</p>
+        </div>
+        
+        <div class="receipt-body">
+            <div class="receipt-item">
+                <span>收据编号:</span>
+                <span>{{ payment.receipt_number }}</span>
+            </div>
+            <div class="receipt-item">
+                <span>日期时间:</span>
+                <span>{{ payment.payment_time.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="receipt-item">
+                <span>车牌号:</span>
+                <span>{{ vehicle.plate_number }}</span>
+            </div>
+            <div class="receipt-item">
+                <span>车辆类型:</span>
+                <span>
+                    {% if vehicle.vehicle_type == 'car' %}
+                        小汽车
+                    {% elif vehicle.vehicle_type == 'motorcycle' %}
+                        摩托车
+                    {% elif vehicle.vehicle_type == 'truck' %}
+                        卡车
+                    {% endif %}
+                </span>
+            </div>
+            <div class="receipt-item">
+                <span>停车位:</span>
+                <span>{{ vehicle.parking_spot.spot_number }}</span>
+            </div>
+            
+            <div class="receipt-divider"></div>
+            
+            <div class="receipt-item">
+                <span>入场时间:</span>
+                <span>{{ vehicle.entry_time.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="receipt-item">
+                <span>出场时间:</span>
+                <span>{{ vehicle.exit_time.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="receipt-item">
+                <span>停车时长:</span>
+                <span>{{ ((vehicle.exit_time - vehicle.entry_time).total_seconds() / 3600)|round(2) }} 小时</span>
+            </div>
+            <div class="receipt-item">
+                <span>费率:</span>
+                <span>
+                    {% if vehicle.vehicle_type == 'car' %}
+                        ¥10.00/小时
+                    {% elif vehicle.vehicle_type == 'motorcycle' %}
+                        ¥5.00/小时
+                    {% elif vehicle.vehicle_type == 'truck' %}
+                        ¥15.00/小时
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="receipt-divider"></div>
+            
+            <div class="receipt-total">
+                <span>总计:</span>
+                <span>¥{{ payment.amount|round(2) }}</span>
+            </div>
+            
+            <div class="receipt-item">
+                <span>支付方式:</span>
+                <span>
+                    {% if payment.payment_method == 'cash' %}
+                        现金
+                    {% elif payment.payment_method == 'credit_card' %}
+                        信用卡
+                    {% elif payment.payment_method == 'wechat' %}
+                        微信支付
+                    {% elif payment.payment_method == 'alipay' %}
+                        支付宝
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="receipt-item">
+                <span>操作员:</span>
+                <span>{{ payment.operator.username }}</span>
+            </div>
+            
+            {% if payment.invoice_required %}
+            <div class="receipt-divider"></div>
+            <div class="receipt-item">
+                <span>发票抬头:</span>
+                <span>{{ payment.invoice_title }}</span>
+            </div>
+            {% if payment.invoice_tax_number %}
+            <div class="receipt-item">
+                <span>税号:</span>
+                <span>{{ payment.invoice_tax_number }}</span>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        
+        <div class="receipt-qr">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+            <p class="small">扫码查询停车记录</p>
+        </div>
+        
+        <div class="receipt-footer">
+            <p>感谢您的光临！</p>
+            <p>如有疑问，请致电: 400-123-4567</p>
+            <p>{{ payment.payment_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

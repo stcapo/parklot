@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}关于我们 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">关于停车场管理系统</h1>
+    <p class="lead">一个全面的停车场解决方案，满足现代停车场管理需求。</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">我们的系统</h5>
+            </div>
+            <div class="card-body">
+                <p>停车场管理系统是一个专为停车场管理人员设计的综合解决方案。我们的系统采用最新的技术，提供直观的用户界面，帮助您高效管理停车场的日常运营。</p>
+                
+                <h5 class="mt-4">系统功能</h5>
+                <ul>
+                    <li>车辆入场和出场管理</li>
+                    <li>自动计费系统</li>
+                    <li>多种支付方式支持</li>
+                    <li>停车位状态实时监控</li>
+                    <li>详细的财务报表</li>
+                    <li>用户权限管理</li>
+                    <li>发票生成</li>
+                    <li>日志记录与系统安全</li>
+                </ul>
+                
+                <h5 class="mt-4">技术特点</h5>
+                <ul>
+                    <li>现代化Web界面，支持各种设备访问</li>
+                    <li>高效的数据库设计，确保快速响应</li>
+                    <li>安全的用户认证和授权机制</li>
+                    <li>强大的报表生成功能</li>
+                    <li>灵活的系统配置，适应不同规模的停车场</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">我们的优势</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="fas fa-check-circle text-success mr-2"></i>用户友好</h6>
+                    <p class="text-muted">直观的界面设计，最小化学习曲线，让操作人员可以快速上手。</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-check-circle text-success mr-2"></i>实时监控</h6>
+                    <p class="text-muted">随时掌握停车场状态，优化停车位使用效率。</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-check-circle text-success mr-2"></i>数据安全</h6>
+                    <p class="text-muted">采用安全的数据存储和传输机制，保护敏感信息。</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-check-circle text-success mr-2"></i>可扩展性</h6>
+                    <p class="text-muted">系统架构支持未来扩展，可以根据需求增加新功能。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">联系我们</h5>
+            </div>
+            <div class="card-body">
+                <p>如果您对我们的系统有任何疑问或需要技术支持，请随时联系我们：</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-envelope mr-2"></i>邮箱: support@parklot.com</li>
+                    <li><i class="fas fa-phone mr-2"></i>电话: 400-123-4567</li>
+                    <li><i class="fas fa-map-marker-alt mr-2"></i>地址: 北京市海淀区科技园区8号楼</li>
+                </ul>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('public.contact') }}" class="btn btn-primary">
+                        <i class="fas fa-paper-plane mr-1"></i>发送消息
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

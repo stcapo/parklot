@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}服务器错误 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="text-center my-5">
+    <div class="error-container">
+        <h1 class="display-1 text-muted">500</h1>
+        <h2 class="mb-4">服务器内部错误</h2>
+        <p class="lead">抱歉，服务器遇到了一个错误。请稍后再试或联系管理员。</p>
+        <div class="mt-5">
+            <a href="{{ url_for('public.index') }}" class="btn btn-primary">
+                <i class="fas fa-home mr-1"></i>返回首页
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

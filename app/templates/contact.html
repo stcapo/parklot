@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}联系我们 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">联系我们</h1>
+    <p class="lead">我们随时准备为您提供帮助和支持。</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-envelope mr-2"></i>发送消息</h5>
+            </div>
+            <div class="card-body">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">您的姓名</label>
+                        <input type="text" class="form-control" id="name" placeholder="请输入您的姓名">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">电子邮箱</label>
+                        <input type="email" class="form-control" id="email" placeholder="请输入您的电子邮箱">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject">主题</label>
+                        <input type="text" class="form-control" id="subject" placeholder="请输入消息主题">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">消息内容</label>
+                        <textarea class="form-control" id="message" rows="5" placeholder="请输入您的消息内容"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-paper-plane mr-1"></i>发送消息
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle mr-2"></i>联系信息</h5>
+            </div>
+            <div class="card-body">
+                <p>如果您有任何问题或需要技术支持，可以通过以下方式联系我们：</p>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-envelope text-primary mr-2"></i>电子邮箱</h6>
+                    <p>一般咨询: info@parklot.com</p>
+                    <p>技术支持: support@parklot.com</p>
+                    <p>商务合作: business@parklot.com</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-phone text-success mr-2"></i>电话</h6>
+                    <p>客服热线: 400-123-4567</p>
+                    <p>技术支持: 400-123-4568</p>
+                    <p>工作时间: 周一至周五 9:00-18:00</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-map-marker-alt text-danger mr-2"></i>地址</h6>
+                    <p>北京市海淀区科技园区8号楼405室</p>
+                    <p>邮编: 100080</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-question-circle mr-2"></i>常见问题</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="faqAccordion">
+                    <div class="card">
+                        <div class="card-header" id="faqOne">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    如何升级系统？
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseOne" class="collapse" aria-labelledby="faqOne" data-parent="#faqAccordion">
+                            <div class="card-body">
+                                请联系我们的技术支持团队，他们将指导您完成升级过程。一般来说，升级过程不会影响您的数据和正常使用。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header" id="faqTwo">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    忘记密码怎么办？
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseTwo" class="collapse" aria-labelledby="faqTwo" data-parent="#faqAccordion">
+                            <div class="card-body">
+                                请联系系统管理员重置您的密码。如果您是管理员，请联系我们的技术支持团队。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header" id="faqThree">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    系统支持哪些支付方式？
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseThree" class="collapse" aria-labelledby="faqThree" data-parent="#faqAccordion">
+                            <div class="card-body">
+                                系统目前支持现金、信用卡、微信支付和支付宝支付方式。我们正在计划增加更多的支付选项。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 联系表单提交处理
+    const contactForm = document.getElementById('contactForm');
+    
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 实际项目中应该通过AJAX提交表单数据
+            alert('感谢您的留言！我们会尽快回复。');
+            
+            // 清空表单
+            this.reset();
+        });
+    }
+});
+</script>
+{% endblock %}

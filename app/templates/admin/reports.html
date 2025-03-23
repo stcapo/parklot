@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}报表统计 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-bar mr-2"></i>报表统计</h2>
+    <div>
+        <form method="get" class="form-inline">
+            <div class="form-group mr-2">
+                <label for="start_date" class="mr-2">开始日期:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" 
+                       value="{{ start_date.strftime('%Y-%m-%d') }}">
+            </div>
+            <div class="form-group mr-2">
+                <label for="end_date" class="mr-2">结束日期:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" 
+                       value="{{ end_date.strftime('%Y-%m-%d') }}">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search mr-1"></i>查询
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 收入统计 -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave mr-2"></i>收入统计</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 车辆类型统计 -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-car mr-2"></i>车辆类型统计</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="vehicleTypeChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 收入数据表格 -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-table mr-2"></i>收入数据明细</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>日期</th>
+                                <th>现金 (¥)</th>
+                                <th>信用卡 (¥)</th>
+                                <th>微信支付 (¥)</th>
+                                <th>支付宝 (¥)</th>
+                                <th>总收入 (¥)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in revenue_data %}
+                            <tr>
+                                <td>{{ data.date }}</td>
+                                <td>{{ data.cash|round(2) }}</td>
+                                <td>{{ data.credit_card|round(2) }}</td>
+                                <td>{{ data.wechat|round(2) }}</td>
+                                <td>{{ data.alipay|round(2) }}</td>
+                                <td class="font-weight-bold">{{ data.total|round(2) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="thead-light">
+                            <tr>
+                                <th>总计</th>
+                                <th>{{ revenue_data|sum(attribute='cash')|round(2) }}</th>
+                                <th>{{ revenue_data|sum(attribute='credit_card')|round(2) }}</th>
+                                <th>{{ revenue_data|sum(attribute='wechat')|round(2) }}</th>
+                                <th>{{ revenue_data|sum(attribute='alipay')|round(2) }}</th>
+                                <th>{{ revenue_data|sum(attribute='total')|round(2) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导出和打印按钮 -->
+<div class="mt-4 text-right">
+    <div class="btn-group">
+        <button class="btn btn-outline-primary" id="printReport">
+            <i class="fas fa-print mr-1"></i>打印报表
+        </button>
+        <button class="btn btn-outline-success" id="exportExcel">
+            <i class="fas fa-file-excel mr-1"></i>导出Excel
+        </button>
+        <button class="btn btn-outline-danger" id="exportPDF">
+            <i class="fas fa-file-pdf mr-1"></i>导出PDF
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 收入数据
+    const revenueData = {
+        labels: [{% for data in revenue_data %} '{{ data.date }}', {% endfor %}],
+        datasets: [
+            {
+                label: '总收入',
+                data: [{% for data in revenue_data %} {{ data.total }}, {% endfor %}],
+                backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                borderColor: 'rgba(0, 123, 255, 1)',
+                borderWidth: 2,
+                type: 'line',
+                fill: false,
+                tension: 0.3,
+                yAxisID: 'y'
+            },
+            {
+                label: '现金',
+                data: [{% for data in revenue_data %} {{ data.cash }}, {% endfor %}],
+                backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            },
+            {
+                label: '信用卡',
+                data: [{% for data in revenue_data %} {{ data.credit_card }}, {% endfor %}],
+                backgroundColor: 'rgba(255, 193, 7, 0.6)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            },
+            {
+                label: '微信支付',
+                data: [{% for data in revenue_data %} {{ data.wechat }}, {% endfor %}],
+                backgroundColor: 'rgba(23, 162, 184, 0.6)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            },
+            {
+                label: '支付宝',
+                data: [{% for data in revenue_data %} {{ data.alipay }}, {% endfor %}],
+                backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }
+        ]
+    };
+    
+    // 车辆类型数据
+    const vehicleTypeData = {
+        labels: ['小汽车', '摩托车', '卡车'],
+        datasets: [{
+            data: [
+                {{ vehicle_stats.car }},
+                {{ vehicle_stats.motorcycle }},
+                {{ vehicle_stats.truck }}
+            ],
+            backgroundColor: [
+                'rgba(0, 123, 255, 0.6)',
+                'rgba(23, 162, 184, 0.6)',
+                'rgba(255, 193, 7, 0.6)'
+            ],
+            borderColor: [
+                'rgba(0, 123, 255, 1)',
+                'rgba(23, 162, 184, 1)',
+                'rgba(255, 193, 7, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    // 收入图表
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(revenueCtx, {
+        type: 'bar',
+        data: revenueData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: '金额 (元)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '日期'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: '每日收入统计'
+                }
+            }
+        }
+    });
+    
+    // 车辆类型图表
+    const vehicleTypeCtx = document.getElementById('vehicleTypeChart').getContext('2d');
+    const vehicleTypeChart = new Chart(vehicleTypeCtx, {
+        type: 'pie',
+        data: vehicleTypeData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                title: {
+                    display: true,
+                    text: '车辆类型分布'
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            const dataset = data.datasets[tooltipItem.datasetIndex];
+                            const value = dataset.data[tooltipItem.index];
+                            const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${data.labels[tooltipItem.index]}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // 打印报表
+    document.getElementById('printReport').addEventListener('click', function() {
+        window.print();
+    });
+    
+    // 导出Excel (模拟功能)
+    document.getElementById('exportExcel').addEventListener('click', function() {
+        alert('Excel导出功能在此处实现');
+        // 实际项目中可以调用后端API生成Excel文件
+    });
+    
+    // 导出PDF (模拟功能)
+    document.getElementById('exportPDF').addEventListener('click', function() {
+        alert('PDF导出功能在此处实现');
+        // 实际项目中可以调用后端API生成PDF文件
+    });
+});
+</script>
+{% endblock %}
