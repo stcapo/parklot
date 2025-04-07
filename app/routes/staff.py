@@ -140,20 +140,20 @@ def process_payment(vehicle_id):
             vehicle_id=vehicle.id,
             amount=vehicle.calculate_fee(),
             payment_method=form.payment_method.data,
-            payment_status='completed',
+            payment_status='completed',  # 直接标记为已完成，模拟支付成功
             receipt_number=f'RCP-{datetime.utcnow().strftime("%Y%m%d%H%M%S")}',
             operator_id=current_user.id,
             invoice_required=form.invoice_required.data,
-            invoice_title=form.invoice_title.data,
-            invoice_tax_number=form.invoice_tax_number.data
+            invoice_title=form.invoice_title.data if form.invoice_required.data else None,
+            invoice_tax_number=form.invoice_tax_number.data if form.invoice_required.data else None
         )
         
         # 更新车辆出场时间
         vehicle.exit_time = datetime.utcnow()
         
         # 释放停车位
-        parking_spot = vehicle.parking_spot
-        parking_spot.is_available = True
+        if vehicle.parking_spot:
+            vehicle.parking_spot.is_available = True
         
         db.session.add(payment)
         db.session.commit()
@@ -167,7 +167,9 @@ def process_payment(vehicle_id):
         )
         
         flash(f'车辆 {vehicle.plate_number} 已成功出场，已收费: {payment.amount}元', 'success')
-        return redirect(url_for('staff.dashboard'))
+        
+        # 跳转到打印收据页面
+        return redirect(url_for('staff.print_receipt', payment_id=payment.id))
     
     # 预填充表单
     form.amount.data = vehicle.calculate_fee()
@@ -243,8 +245,14 @@ def print_receipt(payment_id):
     payment = Payment.query.get_or_404(payment_id)
     vehicle = payment.vehicle
     
+    # 生成收据码
+    from app.utils.helpers import generate_qr_code
+    receipt_data = f"Receipt:{payment.receipt_number},Vehicle:{vehicle.plate_number},Time:{payment.payment_time.strftime('%Y-%m-%d %H:%M:%S')},Amount:{payment.amount}"
+    qr_code = generate_qr_code(receipt_data)
+    
     return render_template(
         'staff/receipt.html',
         payment=payment,
-        vehicle=vehicle
+        vehicle=vehicle,
+        qr_code=qr_code
     )

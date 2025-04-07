@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}支付记录 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-receipt mr-2"></i>支付记录</h2>
+    <div class="form-inline">
+        <form method="get" class="mr-2">
+            <div class="input-group">
+                <input type="date" class="form-control" name="date" value="{{ request.args.get('date', '') }}">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">支付记录列表</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>收据编号</th>
+                        <th>车牌号</th>
+                        <th>车辆类型</th>
+                        <th>支付时间</th>
+                        <th>支付方式</th>
+                        <th>金额</th>
+                        <th>状态</th>
+                        <th>操作员</th>
+                        <th>发票</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.receipt_number }}</td>
+                        <td>{{ payment.vehicle.plate_number }}</td>
+                        <td>
+                            {% if payment.vehicle.vehicle_type == 'car' %}
+                                <span class="badge badge-primary">小汽车</span>
+                            {% elif payment.vehicle.vehicle_type == 'motorcycle' %}
+                                <span class="badge badge-info">摩托车</span>
+                            {% elif payment.vehicle.vehicle_type == 'truck' %}
+                                <span class="badge badge-warning">卡车</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ payment.payment_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if payment.payment_method == 'cash' %}
+                                <span class="badge badge-success">现金</span>
+                            {% elif payment.payment_method == 'credit_card' %}
+                                <span class="badge badge-info">信用卡</span>
+                            {% elif payment.payment_method == 'wechat' %}
+                                <span class="badge badge-success">微信支付</span>
+                            {% elif payment.payment_method == 'alipay' %}
+                                <span class="badge badge-primary">支付宝</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">¥{{ payment.amount|round(2) }}</td>
+                        <td>
+                            {% if payment.payment_status == 'completed' %}
+                                <span class="badge badge-success">已完成</span>
+                            {% elif payment.payment_status == 'pending' %}
+                                <span class="badge badge-warning">待处理</span>
+                            {% elif payment.payment_status == 'failed' %}
+                                <span class="badge badge-danger">失败</span>
+                            {% elif payment.payment_status == 'refunded' %}
+                                <span class="badge badge-info">已退款</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ payment.operator.username if payment.operator else '-' }}</td>
+                        <td>
+                            {% if payment.invoice_required %}
+                                <span class="badge badge-info" data-toggle="tooltip" 
+                                      title="发票信息: {{ payment.invoice_title }} {{ payment.invoice_tax_number if payment.invoice_tax_number else '' }}">
+                                    <i class="fas fa-file-invoice"></i> 已开
+                                </span>
+                            {% else %}
+                                <span class="badge badge-secondary">未开</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('staff.print_receipt', payment_id=payment.id) }}" 
+                               class="btn btn-sm btn-primary" target="_blank">
+                                <i class="fas fa-print"></i> 打印收据
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center">没有找到支付记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 分页 -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Payment pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('staff.payments', page=pagination.prev_num, date=request.args.get('date', '')) }}">
+                            <i class="fas fa-chevron-left"></i> 上一页
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-left"></i> 上一页</span>
+                    </li>
+                {% endif %}
+                
+                {% for page in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                    {% if page %}
+                        {% if page == pagination.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('staff.payments', page=page, date=request.args.get('date', '')) }}">{{ page }}</a>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('staff.payments', page=pagination.next_num, date=request.args.get('date', '')) }}">
+                            下一页 <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">下一页 <i class="fas fa-chevron-right"></i></span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 收入统计卡片 -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">总收入</h5>
+                <h3>¥{{ total_amount|round(2) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">现金支付</h5>
+                <h3>¥{{ payments|selectattr('payment_method', 'equalto', 'cash')|sum(attribute='amount')|round(2) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">微信/支付宝</h5>
+                <h3>¥{{ (payments|selectattr('payment_method', 'equalto', 'wechat')|sum(attribute='amount') + 
+                      payments|selectattr('payment_method', 'equalto', 'alipay')|sum(attribute='amount'))|round(2) }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5 class="card-title">信用卡</h5>
+                <h3>¥{{ payments|selectattr('payment_method', 'equalto', 'credit_card')|sum(attribute='amount')|round(2) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化工具提示
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+});
+</script>
+{% endblock %}

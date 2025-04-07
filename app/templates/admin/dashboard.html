@@ -15,7 +15,7 @@
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <canvas id="carPieChart" width="100" height="100"></canvas>
+                        <div id="carPieChart" style="width: 100%; height: 140px;"></div>
                     </div>
                     <div class="col-md-6">
                         <p class="mb-1">总车位: {{ parking_summary.car.total }}</p>
@@ -36,7 +36,7 @@
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <canvas id="motorcyclePieChart" width="100" height="100"></canvas>
+                        <div id="motorcyclePieChart" style="width: 100%; height: 140px;"></div>
                     </div>
                     <div class="col-md-6">
                         <p class="mb-1">总车位: {{ parking_summary.motorcycle.total }}</p>
@@ -57,7 +57,7 @@
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <canvas id="truckPieChart" width="100" height="100"></canvas>
+                        <div id="truckPieChart" style="width: 100%; height: 140px;"></div>
                     </div>
                     <div class="col-md-6">
                         <p class="mb-1">总车位: {{ parking_summary.truck.total }}</p>
@@ -209,75 +209,156 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 初始化ECharts图表
+    const carChart = echarts.init(document.getElementById('carPieChart'));
+    const motorcycleChart = echarts.init(document.getElementById('motorcyclePieChart'));
+    const truckChart = echarts.init(document.getElementById('truckPieChart'));
+    
     // 小汽车车位饼图
-    var carCtx = document.getElementById('carPieChart').getContext('2d');
-    var carChart = new Chart(carCtx, {
-        type: 'pie',
-        data: {
-            labels: ['已占用', '空闲'],
-            datasets: [{
-                data: [{{ parking_summary.car.occupied }}, {{ parking_summary.car.available }}],
-                backgroundColor: ['#dc3545', '#28a745'],
-                borderWidth: 1
-            }]
+    const carOption = {
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c} ({d}%)'
         },
-        options: {
-            responsive: true,
-            legend: {
-                position: 'bottom',
-                labels: {
-                    boxWidth: 12
+        legend: {
+            orient: 'vertical',
+            right: 0,
+            top: 'center',
+            itemWidth: 10,
+            itemHeight: 10,
+            itemGap: 5,
+            textStyle: {
+                fontSize: 10
+            },
+            data: ['已占用', '空闲']
+        },
+        series: [{
+            name: '小汽车车位',
+            type: 'pie',
+            radius: ['50%', '70%'],
+            center: ['40%', '50%'],
+            avoidLabelOverlap: false,
+            label: {
+                show: false
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: '12',
+                    fontWeight: 'bold'
                 }
-            }
-        }
-    });
+            },
+            labelLine: {
+                show: false
+            },
+            data: [
+                {value: {{ parking_summary.car.occupied }}, name: '已占用', itemStyle: {color: '#dc3545'}},
+                {value: {{ parking_summary.car.available }}, name: '空闲', itemStyle: {color: '#28a745'}}
+            ]
+        }]
+    };
     
     // 摩托车车位饼图
-    var motorcycleCtx = document.getElementById('motorcyclePieChart').getContext('2d');
-    var motorcycleChart = new Chart(motorcycleCtx, {
-        type: 'pie',
-        data: {
-            labels: ['已占用', '空闲'],
-            datasets: [{
-                data: [{{ parking_summary.motorcycle.occupied }}, {{ parking_summary.motorcycle.available }}],
-                backgroundColor: ['#dc3545', '#28a745'],
-                borderWidth: 1
-            }]
+    const motorcycleOption = {
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c} ({d}%)'
         },
-        options: {
-            responsive: true,
-            legend: {
-                position: 'bottom',
-                labels: {
-                    boxWidth: 12
+        legend: {
+            orient: 'vertical',
+            right: 0,
+            top: 'center',
+            itemWidth: 10,
+            itemHeight: 10,
+            itemGap: 5,
+            textStyle: {
+                fontSize: 10
+            },
+            data: ['已占用', '空闲']
+        },
+        series: [{
+            name: '摩托车车位',
+            type: 'pie',
+            radius: ['50%', '70%'],
+            center: ['40%', '50%'],
+            avoidLabelOverlap: false,
+            label: {
+                show: false
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: '12',
+                    fontWeight: 'bold'
                 }
-            }
-        }
-    });
+            },
+            labelLine: {
+                show: false
+            },
+            data: [
+                {value: {{ parking_summary.motorcycle.occupied }}, name: '已占用', itemStyle: {color: '#dc3545'}},
+                {value: {{ parking_summary.motorcycle.available }}, name: '空闲', itemStyle: {color: '#28a745'}}
+            ]
+        }]
+    };
     
     // 卡车车位饼图
-    var truckCtx = document.getElementById('truckPieChart').getContext('2d');
-    var truckChart = new Chart(truckCtx, {
-        type: 'pie',
-        data: {
-            labels: ['已占用', '空闲'],
-            datasets: [{
-                data: [{{ parking_summary.truck.occupied }}, {{ parking_summary.truck.available }}],
-                backgroundColor: ['#dc3545', '#28a745'],
-                borderWidth: 1
-            }]
+    const truckOption = {
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c} ({d}%)'
         },
-        options: {
-            responsive: true,
-            legend: {
-                position: 'bottom',
-                labels: {
-                    boxWidth: 12
+        legend: {
+            orient: 'vertical',
+            right: 0,
+            top: 'center',
+            itemWidth: 10,
+            itemHeight: 10,
+            itemGap: 5,
+            textStyle: {
+                fontSize: 10
+            },
+            data: ['已占用', '空闲']
+        },
+        series: [{
+            name: '卡车车位',
+            type: 'pie',
+            radius: ['50%', '70%'],
+            center: ['40%', '50%'],
+            avoidLabelOverlap: false,
+            label: {
+                show: false
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: '12',
+                    fontWeight: 'bold'
                 }
-            }
-        }
+            },
+            labelLine: {
+                show: false
+            },
+            data: [
+                {value: {{ parking_summary.truck.occupied }}, name: '已占用', itemStyle: {color: '#dc3545'}},
+                {value: {{ parking_summary.truck.available }}, name: '空闲', itemStyle: {color: '#28a745'}}
+            ]
+        }]
+    };
+    
+    // 应用配置
+    carChart.setOption(carOption);
+    motorcycleChart.setOption(motorcycleOption);
+    truckChart.setOption(truckOption);
+    
+    // 响应窗口大小变化
+    window.addEventListener('resize', function() {
+        carChart.resize();
+        motorcycleChart.resize();
+        truckChart.resize();
     });
 });
 </script>

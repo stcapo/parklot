@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}编辑停车位 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-parking mr-2"></i>编辑停车位信息</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-group">
+                        {{ form.spot_number.label }}
+                        {{ form.spot_number(class="form-control") }}
+                        {% if form.spot_number.errors %}
+                            <div class="text-danger">
+                                {% for error in form.spot_number.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.spot_type.label }}
+                        {{ form.spot_type(class="form-control") }}
+                    </div>
+                    
+                    <div class="form-group form-check">
+                        {{ form.is_disabled(class="form-check-input") }}
+                        {{ form.is_disabled.label(class="form-check-label") }}
+                    </div>
+                    
+                    <div class="form-group form-check">
+                        {{ form.is_vip(class="form-check-input") }}
+                        {{ form.is_vip.label(class="form-check-label") }}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.location.label }}
+                        {{ form.location(class="form-control", placeholder="例如：1楼A区") }}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.notes.label }}
+                        {{ form.notes(class="form-control", rows=3, placeholder="添加关于此停车位的备注...") }}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('admin.parking_spots') }}" class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

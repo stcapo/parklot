@@ -32,7 +32,7 @@
                 <h5 class="mb-0"><i class="fas fa-money-bill-wave mr-2"></i>收入统计</h5>
             </div>
             <div class="card-body">
-                <canvas id="revenueChart" height="300"></canvas>
+                <div id="revenueChart" style="height: 350px;"></div>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@
                 <h5 class="mb-0"><i class="fas fa-car mr-2"></i>车辆类型统计</h5>
             </div>
             <div class="card-body">
-                <canvas id="vehicleTypeChart" height="300"></canvas>
+                <div id="vehicleTypeChart" style="height: 350px;"></div>
             </div>
         </div>
     </div>
@@ -116,157 +116,381 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+<!-- 引入 ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 收入数据
-    const revenueData = {
-        labels: [{% for data in revenue_data %} '{{ data.date }}', {% endfor %}],
-        datasets: [
-            {
-                label: '总收入',
-                data: [{% for data in revenue_data %} {{ data.total }}, {% endfor %}],
-                backgroundColor: 'rgba(0, 123, 255, 0.5)',
-                borderColor: 'rgba(0, 123, 255, 1)',
-                borderWidth: 2,
-                type: 'line',
-                fill: false,
-                tension: 0.3,
-                yAxisID: 'y'
-            },
-            {
-                label: '现金',
-                data: [{% for data in revenue_data %} {{ data.cash }}, {% endfor %}],
-                backgroundColor: 'rgba(40, 167, 69, 0.6)',
-                borderWidth: 1,
-                yAxisID: 'y'
-            },
-            {
-                label: '信用卡',
-                data: [{% for data in revenue_data %} {{ data.credit_card }}, {% endfor %}],
-                backgroundColor: 'rgba(255, 193, 7, 0.6)',
-                borderWidth: 1,
-                yAxisID: 'y'
-            },
-            {
-                label: '微信支付',
-                data: [{% for data in revenue_data %} {{ data.wechat }}, {% endfor %}],
-                backgroundColor: 'rgba(23, 162, 184, 0.6)',
-                borderWidth: 1,
-                yAxisID: 'y'
-            },
-            {
-                label: '支付宝',
-                data: [{% for data in revenue_data %} {{ data.alipay }}, {% endfor %}],
-                backgroundColor: 'rgba(220, 53, 69, 0.6)',
-                borderWidth: 1,
-                yAxisID: 'y'
-            }
-        ]
-    };
+    // 准备数据
+    const dates = [{% for data in revenue_data %} '{{ data.date }}', {% endfor %}];
+    const totalIncome = [{% for data in revenue_data %} {{ data.total }}, {% endfor %}];
+    const cashIncome = [{% for data in revenue_data %} {{ data.cash }}, {% endfor %}];
+    const creditCardIncome = [{% for data in revenue_data %} {{ data.credit_card }}, {% endfor %}];
+    const wechatIncome = [{% for data in revenue_data %} {{ data.wechat }}, {% endfor %}];
+    const alipayIncome = [{% for data in revenue_data %} {{ data.alipay }}, {% endfor %}];
     
     // 车辆类型数据
-    const vehicleTypeData = {
-        labels: ['小汽车', '摩托车', '卡车'],
-        datasets: [{
-            data: [
-                {{ vehicle_stats.car }},
-                {{ vehicle_stats.motorcycle }},
-                {{ vehicle_stats.truck }}
-            ],
-            backgroundColor: [
-                'rgba(0, 123, 255, 0.6)',
-                'rgba(23, 162, 184, 0.6)',
-                'rgba(255, 193, 7, 0.6)'
-            ],
-            borderColor: [
-                'rgba(0, 123, 255, 1)',
-                'rgba(23, 162, 184, 1)',
-                'rgba(255, 193, 7, 1)'
-            ],
-            borderWidth: 1
-        }]
+    const vehicleTypes = ['小汽车', '摩托车', '卡车'];
+    const vehicleCounts = [{{ vehicle_stats.car }}, {{ vehicle_stats.motorcycle }}, {{ vehicle_stats.truck }}];
+    
+    // 初始化收入图表
+    const revenueChart = echarts.init(document.getElementById('revenueChart'));
+    
+    // 收入图表配置
+    const revenueOption = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function(params) {
+                let result = params[0].name + '<br/>';
+                params.forEach(param => {
+                    // 显示百分比
+                    const colorSpan = `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${param.color};"></span>`;
+                    result += colorSpan + param.seriesName + ': ¥' + param.value.toFixed(2) + '<br/>';
+                });
+                return result;
+            }
+        },
+        legend: {
+            data: ['总收入', '现金', '信用卡', '微信支付', '支付宝'],
+            top: 10
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataView: { show: true, readOnly: false },
+                magicType: { show: true, type: ['line', 'bar', 'stack'] },
+                restore: { show: true },
+                saveAsImage: { show: true }
+            }
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: dates,
+            axisLabel: {
+                rotate: 45
+            }
+        },
+        yAxis: {
+            type: 'value',
+            name: '金额 (元)',
+            axisLabel: {
+                formatter: '¥{value}'
+            }
+        },
+        series: [
+            {
+                name: '总收入',
+                type: 'line',
+                smooth: true,
+                emphasis: {
+                    focus: 'series'
+                },
+                lineStyle: {
+                    width: 3
+                },
+                itemStyle: {
+                    color: '#409EFF'
+                },
+                data: totalIncome
+            },
+            {
+                name: '现金',
+                type: 'bar',
+                stack: '支付方式',
+                emphasis: {
+                    focus: 'series'
+                },
+                itemStyle: {
+                    color: '#67C23A'
+                },
+                data: cashIncome
+            },
+            {
+                name: '信用卡',
+                type: 'bar',
+                stack: '支付方式',
+                emphasis: {
+                    focus: 'series'
+                },
+                itemStyle: {
+                    color: '#E6A23C'
+                },
+                data: creditCardIncome
+            },
+            {
+                name: '微信支付',
+                type: 'bar',
+                stack: '支付方式',
+                emphasis: {
+                    focus: 'series'
+                },
+                itemStyle: {
+                    color: '#909399'
+                },
+                data: wechatIncome
+            },
+            {
+                name: '支付宝',
+                type: 'bar',
+                stack: '支付方式',
+                emphasis: {
+                    focus: 'series'
+                },
+                itemStyle: {
+                    color: '#F56C6C'
+                },
+                data: alipayIncome
+            }
+        ],
+        dataZoom: [{
+            type: 'inside',
+            start: 0,
+            end: 100
+        }, {
+            type: 'slider',
+            height: 20,
+            bottom: 0
+        }],
+        title: {
+            text: '各类支付方式收入趋势',
+            left: 'center'
+        }
     };
     
-    // 收入图表
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    const revenueChart = new Chart(revenueCtx, {
-        type: 'bar',
-        data: revenueData,
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: '金额 (元)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: '日期'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top'
-                },
-                title: {
-                    display: true,
-                    text: '每日收入统计'
-                }
-            }
-        }
-    });
+    // 使用配置并渲染收入图表
+    revenueChart.setOption(revenueOption);
     
-    // 车辆类型图表
-    const vehicleTypeCtx = document.getElementById('vehicleTypeChart').getContext('2d');
-    const vehicleTypeChart = new Chart(vehicleTypeCtx, {
-        type: 'pie',
-        data: vehicleTypeData,
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                title: {
-                    display: true,
-                    text: '车辆类型分布'
-                },
-                tooltips: {
-                    callbacks: {
-                        label: function(tooltipItem, data) {
-                            const dataset = data.datasets[tooltipItem.datasetIndex];
-                            const value = dataset.data[tooltipItem.index];
-                            const total = dataset.data.reduce((sum, val) => sum + val, 0);
-                            const percentage = Math.round((value / total) * 100);
-                            return `${data.labels[tooltipItem.index]}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
+    // 初始化车辆类型图表
+    const vehicleTypeChart = echarts.init(document.getElementById('vehicleTypeChart'));
+    
+    // 计算百分比
+    const total = vehicleCounts.reduce((sum, val) => sum + val, 0);
+    const percentages = vehicleCounts.map(val => ((val / total) * 100).toFixed(1));
+    
+    // 车辆类型图表配置
+    const vehicleTypeOption = {
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 10,
+            data: vehicleTypes
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                mark: { show: true },
+                dataView: { show: true, readOnly: false },
+                restore: { show: true },
+                saveAsImage: { show: true }
             }
+        },
+        series: [
+            {
+                name: '车辆类型',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    formatter: '{b}: {c} ({d}%)'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: '18',
+                        fontWeight: 'bold'
+                    }
+                },
+                labelLine: {
+                    show: true
+                },
+                data: [
+                    { value: vehicleCounts[0], name: vehicleTypes[0] },
+                    { value: vehicleCounts[1], name: vehicleTypes[1] },
+                    { value: vehicleCounts[2], name: vehicleTypes[2] }
+                ],
+                color: ['#409EFF', '#67C23A', '#E6A23C']
+            }
+        ],
+        title: {
+            text: '车辆类型分布',
+            left: 'center'
         }
+    };
+    
+    // 使用配置并渲染车辆类型图表
+    vehicleTypeChart.setOption(vehicleTypeOption);
+    
+    // 响应窗口大小变化
+    window.addEventListener('resize', function() {
+        revenueChart.resize();
+        vehicleTypeChart.resize();
     });
     
     // 打印报表
     document.getElementById('printReport').addEventListener('click', function() {
-        window.print();
+        // 创建一个可打印的布局
+        const printContent = document.createElement('div');
+        printContent.innerHTML = `
+            <h2 class="text-center">停车场管理系统 - 营收报表</h2>
+            <p class="text-center">时间区间: ${document.getElementById('start_date').value} 至 ${document.getElementById('end_date').value}</p>
+            <div class="row">
+                <div class="col-12">
+                    ${document.querySelector('.table-responsive').outerHTML}
+                </div>
+            </div>
+        `;
+        
+        // 创建一个新窗口用于打印
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>营收报表</title>
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+                    <style>
+                        body { padding: 20px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { padding: 8px; border: 1px solid #ddd; }
+                        th { background-color: #f8f9fa; }
+                        @media print {
+                            @page { size: landscape; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContent.innerHTML}
+                </body>
+            </html>
+        `);
+        
+        // 等待样式加载完成后打印
+        setTimeout(function() {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
     });
     
-    // 导出Excel (模拟功能)
+    // 导出Excel
     document.getElementById('exportExcel').addEventListener('click', function() {
-        alert('Excel导出功能在此处实现');
-        // 实际项目中可以调用后端API生成Excel文件
+        // 创建工作表
+        const workbook = XLSX.utils.book_new();
+        
+        // 获取表格数据
+        const table = document.querySelector('table');
+        const worksheet = XLSX.utils.table_to_sheet(table);
+        
+        // 添加工作表到工作簿
+        XLSX.utils.book_append_sheet(workbook, worksheet, '收入报表');
+        
+        // 添加车辆类型统计
+        const vehicleStats = [
+            ['车辆类型', '数量'],
+            ['小汽车', {{ vehicle_stats.car }}],
+            ['摩托车', {{ vehicle_stats.motorcycle }}],
+            ['卡车', {{ vehicle_stats.truck }}]
+        ];
+        
+        const vehicleSheet = XLSX.utils.aoa_to_sheet(vehicleStats);
+        XLSX.utils.book_append_sheet(workbook, vehicleSheet, '车辆统计');
+        
+        // 生成Excel文件并下载
+        const reportPeriod = document.getElementById('start_date').value + '_to_' + document.getElementById('end_date').value;
+        XLSX.writeFile(workbook, `停车场收入报表_${reportPeriod}.xlsx`);
     });
     
-    // 导出PDF (模拟功能)
+    // 导出PDF
     document.getElementById('exportPDF').addEventListener('click', function() {
-        alert('PDF导出功能在此处实现');
-        // 实际项目中可以调用后端API生成PDF文件
+        // 初始化 jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+        
+        // 添加标题
+        doc.setFontSize(16);
+        doc.text('停车场管理系统 - 营收报表', 150, 15, { align: 'center' });
+        
+        // 添加时间区间
+        doc.setFontSize(12);
+        doc.text(`时间区间: ${document.getElementById('start_date').value} 至 ${document.getElementById('end_date').value}`, 150, 25, { align: 'center' });
+        
+        // 设置小字体以适应表格
+        doc.setFontSize(10);
+        
+        // 导出收入表格
+        // 创建表格数据
+        const tableData = [];
+        const headerRow = [];
+        
+        // 获取表头
+        const headers = document.querySelectorAll('table thead th');
+        headers.forEach(header => {
+            headerRow.push(header.textContent);
+        });
+        tableData.push(headerRow);
+        
+        // 获取数据行
+        const rows = document.querySelectorAll('table tbody tr');
+        rows.forEach(row => {
+            const dataRow = [];
+            row.querySelectorAll('td').forEach(cell => {
+                dataRow.push(cell.textContent);
+            });
+            tableData.push(dataRow);
+        });
+        
+        // 添加表格
+        doc.autoTable({
+            head: [tableData[0]],
+            body: tableData.slice(1),
+            startY: 35,
+            theme: 'grid',
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [66, 139, 202] }
+        });
+        
+        // 添加车辆统计数据
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.text('车辆类型统计', 150, 15, { align: 'center' });
+        
+        // 创建车辆统计表格
+        const vehicleStats = [
+            ['车辆类型', '数量'],
+            ['小汽车', {{ vehicle_stats.car }}],
+            ['摩托车', {{ vehicle_stats.motorcycle }}],
+            ['卡车', {{ vehicle_stats.truck }}]
+        ];
+        
+        doc.autoTable({
+            head: [vehicleStats[0]],
+            body: vehicleStats.slice(1),
+            startY: 25,
+            theme: 'grid',
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [66, 139, 202] }
+        });
+        
+        // 保存PDF
+        const reportPeriod = document.getElementById('start_date').value + '_to_' + document.getElementById('end_date').value;
+        doc.save(`停车场收入报表_${reportPeriod}.pdf`);
     });
 });
 </script>

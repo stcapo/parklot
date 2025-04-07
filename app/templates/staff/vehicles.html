@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}车辆管理 - 停车场管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-car mr-2"></i>车辆管理</h2>
+    <div class="form-inline">
+        <form method="get" class="mr-2">
+            <div class="input-group">
+                <input type="text" class="form-control" name="plate" placeholder="搜索车牌..." value="{{ plate_search }}">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+        <div class="btn-group">
+            <a href="{{ url_for('staff.vehicles', status='all') }}" class="btn {% if status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                全部车辆
+            </a>
+            <a href="{{ url_for('staff.vehicles', status='parked') }}" class="btn {% if status == 'parked' %}btn-success{% else %}btn-outline-success{% endif %}">
+                在场车辆
+            </a>
+            <a href="{{ url_for('staff.vehicles', status='exited') }}" class="btn {% if status == 'exited' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                已离场
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">车辆列表</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>车牌号</th>
+                        <th>车辆类型</th>
+                        <th>入场时间</th>
+                        <th>出场时间</th>
+                        <th>停车位</th>
+                        <th>停车时长</th>
+                        <th>费用</th>
+                        <th>车主信息</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vehicle in vehicles %}
+                    <tr>
+                        <td>{{ vehicle.plate_number }}</td>
+                        <td>
+                            {% if vehicle.vehicle_type == 'car' %}
+                                <span class="badge badge-primary">小汽车</span>
+                            {% elif vehicle.vehicle_type == 'motorcycle' %}
+                                <span class="badge badge-info">摩托车</span>
+                            {% elif vehicle.vehicle_type == 'truck' %}
+                                <span class="badge badge-warning">卡车</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ vehicle.entry_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if vehicle.exit_time %}
+                                {{ vehicle.exit_time.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                <span class="badge badge-success">在场</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if vehicle.parking_spot %}
+                                {{ vehicle.parking_spot.spot_number }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ vehicle.parking_duration|round(2) }} 小时</td>
+                        <td>¥{{ vehicle.calculate_fee()|round(2) }}</td>
+                        <td>
+                            {% if vehicle.owner_name or vehicle.owner_phone %}
+                                <button type="button" class="btn btn-sm btn-info" data-toggle="popover" 
+                                        title="车主信息" data-content="姓名: {{ vehicle.owner_name or '未提供' }}<br>电话: {{ vehicle.owner_phone or '未提供' }}">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not vehicle.exit_time %}
+                                <a href="{{ url_for('staff.process_payment', vehicle_id=vehicle.id) }}" 
+                                   class="btn btn-sm btn-danger">
+                                    <i class="fas fa-sign-out-alt"></i> 办理出场
+                                </a>
+                            {% elif vehicle.payment %}
+                                <a href="{{ url_for('staff.print_receipt', payment_id=vehicle.payment.id) }}" 
+                                   class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-receipt"></i> 查看收据
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center">未找到车辆记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 分页 -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Vehicle pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('staff.vehicles', page=pagination.prev_num, status=status, plate=plate_search) }}">
+                            <i class="fas fa-chevron-left"></i> 上一页
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-left"></i> 上一页</span>
+                    </li>
+                {% endif %}
+                
+                {% for page in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                    {% if page %}
+                        {% if page == pagination.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('staff.vehicles', page=page, status=status, plate=plate_search) }}">{{ page }}</a>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('staff.vehicles', page=pagination.next_num, status=status, plate=plate_search) }}">
+                            下一页 <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">下一页 <i class="fas fa-chevron-right"></i></span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化弹出框
+    $(function () {
+        $('[data-toggle="popover"]').popover({
+            html: true,
+            trigger: 'hover'
+        });
+    });
+});
+</script>
+{% endblock %}

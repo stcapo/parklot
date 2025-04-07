@@ -36,12 +36,83 @@
                     </div>
                 </div>
                 
-                <form method="post" class="mt-4">
+                <form method="post" id="payment-form">
                     {{ form.hidden_tag() }}
                     
                     <div class="form-group">
                         {{ form.payment_method.label }}
                         {{ form.payment_method(class="form-control") }}
+                    </div>
+                    
+                    <div id="payment-instructions">
+                        <!-- 现金支付指南 -->
+                        <div id="cash-instruction" class="payment-instruction bg-light p-3 mb-3" style="display: none;">
+                            <h6><i class="fas fa-money-bill-wave mr-1"></i> 现金支付指南</h6>
+                            <ol>
+                                <li>确认收取正确金额：¥{{ form.amount.data|round(2) }}</li>
+                                <li>核对取领金额和找零</li>
+                                <li>点击"确认支付"完成交易</li>
+                            </ol>
+                        </div>
+                        
+                        <!-- 信用卡支付指南 -->
+                        <div id="credit_card-instruction" class="payment-instruction bg-light p-3 mb-3" style="display: none;">
+                            <h6><i class="fas fa-credit-card mr-1"></i> 信用卡支付指南</h6>
+                            <ol>
+                                <li>使用POS机刷卡</li>
+                                <li>输入支付金额：¥{{ form.amount.data|round(2) }}</li>
+                                <li>让客户输入密码并确认</li>
+                                <li>等待交易成功后，点击"确认支付"</li>
+                            </ol>
+                        </div>
+                        
+                        <!-- 微信支付指南 -->
+                        <div id="wechat-instruction" class="payment-instruction bg-light p-3 mb-3" style="display: none;">
+                            <h6><i class="fab fa-weixin mr-1"></i> 微信支付指南</h6>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <ol>
+                                        <li>出示二维码让客户扫码支付</li>
+                                        <li>支付金额：¥{{ form.amount.data|round(2) }}</li>
+                                        <li>确认收到支付通知后，点击"确认支付"</li>
+                                    </ol>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <!-- 模拟的微信二维码 -->
+                                    <div class="bg-white p-2" style="width: 120px; height: 120px; margin: 0 auto;">
+                                        <div class="text-center" style="font-size: 8px; line-height: 1.2;">
+                                            <i class="fab fa-weixin fa-4x text-success mb-2"></i><br>
+                                            模拟二维码<br>
+                                            ¥{{ form.amount.data|round(2) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 支付宝支付指南 -->
+                        <div id="alipay-instruction" class="payment-instruction bg-light p-3 mb-3" style="display: none;">
+                            <h6><i class="fab fa-alipay mr-1"></i> 支付宝支付指南</h6>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <ol>
+                                        <li>出示二维码让客户扫码支付</li>
+                                        <li>支付金额：¥{{ form.amount.data|round(2) }}</li>
+                                        <li>确认收到支付通知后，点击"确认支付"</li>
+                                    </ol>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <!-- 模拟的支付宝二维码 -->
+                                    <div class="bg-white p-2" style="width: 120px; height: 120px; margin: 0 auto;">
+                                        <div class="text-center" style="font-size: 8px; line-height: 1.2;">
+                                            <i class="fab fa-alipay fa-4x text-primary mb-2"></i><br>
+                                            模拟二维码<br>
+                                            ¥{{ form.amount.data|round(2) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-group form-check">
@@ -52,7 +123,7 @@
                     <div id="invoiceFields" style="display: none;">
                         <div class="form-group">
                             {{ form.invoice_title.label }}
-                            {{ form.invoice_title(class="form-control", placeholder="请输入发票抬头") }}
+                            {{ form.invoice_title(class="form-control", placeholder="请输入发票抄头") }}
                         </div>
                         
                         <div class="form-group">
@@ -122,6 +193,26 @@
         </div>
     </div>
 </div>
+
+<!-- 支付处理模态框 -->
+<div class="modal fade" id="paymentProcessingModal" tabindex="-1" role="dialog" aria-labelledby="paymentProcessingModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="paymentProcessingModalLabel">正在处理支付</h5>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-money-bill-wave fa-3x text-primary mb-3"></i>
+                </div>
+                <div class="progress mb-3">
+                    <div id="payment-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <pre id="payment-message" class="bg-light p-3 rounded">正在初始化支付系统...</pre>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -143,8 +234,87 @@ document.addEventListener('DOMContentLoaded', function() {
             invoiceFields.style.display = 'block';
         } else {
             invoiceFields.style.display = 'none';
+            // 清空发票字段
+            document.getElementById('invoice_title').value = '';
+            document.getElementById('invoice_tax_number').value = '';
         }
     }
+    
+    // 监听支付方式切换事件
+    const paymentMethodSelect = document.getElementById('payment_method');
+    paymentMethodSelect.addEventListener('change', function() {
+        // 模拟不同支付方式的界面变化
+        const paymentMethod = this.value;
+        
+        // 隐藏所有支付方式信息并显示当前选择的
+        document.querySelectorAll('.payment-instruction').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // 显示选择的支付方式信息
+        const selectedInstruction = document.getElementById(paymentMethod + '-instruction');
+        if (selectedInstruction) {
+            selectedInstruction.style.display = 'block';
+        }
+    });
+    
+    // 触发一次变更事件以显示当前选中的支付方式信息
+    paymentMethodSelect.dispatchEvent(new Event('change'));
+    
+    // 弹出模拟支付过程对话框
+    document.getElementById('payment-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // 阻止表单默认提交
+        
+        const paymentMethod = paymentMethodSelect.value;
+        let message = '正在处理支付...\n';
+        
+        switch(paymentMethod) {
+            case 'cash':
+                message += '已确认收到现金\n';
+                break;
+            case 'credit_card':
+                message += '刷卡成功\n';
+                break;
+            case 'wechat':
+                message += '微信支付已完成\n';
+                break;
+            case 'alipay':
+                message += '支付宝支付已完成\n';
+                break;
+        }
+        
+        // 显示支付进度模拟对话框
+        const paymentModal = document.getElementById('paymentProcessingModal');
+        const paymentMessage = document.getElementById('payment-message');
+        const progressBar = document.getElementById('payment-progress');
+        
+        // 重置进度条
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', 0);
+        
+        // 显示模拟支付对话框
+        $('#paymentProcessingModal').modal('show');
+        
+        // 模拟支付进度
+        let progress = 0;
+        const interval = setInterval(function() {
+            progress += 20;
+            progressBar.style.width = progress + '%';
+            progressBar.setAttribute('aria-valuenow', progress);
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                paymentMessage.textContent = message + '\n支付成功！正在释放停车位...';
+                
+                // 支付完成后提交表单
+                setTimeout(function() {
+                    document.getElementById('payment-form').submit();
+                }, 1000);
+            } else {
+                paymentMessage.textContent = message + '\n处理中...' + progress + '%';
+            }
+        }, 400); // 每400毫秒更新一次进度
+    });
 });
 </script>
 {% endblock %}
